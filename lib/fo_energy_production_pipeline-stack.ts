@@ -1,6 +1,7 @@
 import * as cdk from '@aws-cdk/core';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as apigw from '@aws-cdk/aws-apigateway';
+import * as dynamodb from '@aws-cdk/aws-dynamodb';
 
 export class FoEnergyProductionPipelineStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -16,5 +17,17 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
     new apigw.LambdaRestApi(this, 'Endpoint', {
       handler: SevPullLambda
     });
+
+    // DynamoDB for storing the SEV data
+    const SevTable = new dynamodb.Table(this, 'Table', {
+      partitionKey: {
+        name: 'PK',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    new cdk.CfnOutput(this, 'TableName', {value: SevTable.tableName});
+
   }
 }

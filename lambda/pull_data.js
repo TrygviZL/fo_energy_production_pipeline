@@ -1,5 +1,6 @@
 var https = require('https');
 
+// Primary handler function for lambda to pull data
 exports.handler = async function(event) {
     return httprequest().then((data) => {
         const response = {
@@ -9,6 +10,8 @@ exports.handler = async function(event) {
     return response;
     });
 };
+
+// Function to call API and return data
 function httprequest() {
      return new Promise((resolve, reject) => {
         const options = {
