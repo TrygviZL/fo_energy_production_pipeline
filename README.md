@@ -1,11 +1,7 @@
-# Welcome to your CDK TypeScript project!
-
-This is a blank project for TypeScript development with CDK.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+# Faroe Islands Production data pipeline
+Small project to pull data from public api https://www.sev.fo/api/realtimemap/now/ which returns the energy pruduction data of SEV, the Faroese energy company. The project is written in aws CDK and fully hosted on aws. 
 
 ## Useful commands
-
  * `npm run build`   compile typescript to js
  * `npm run watch`   watch for changes and compile
  * `npm run test`    perform the jest unit tests
