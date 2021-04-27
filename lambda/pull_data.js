@@ -6,20 +6,17 @@ AWS.config.update({region: 'eu-west-1'});
 
 
 // Primary handler function for lambda to pull data
-exports.handler = async function(event) {
-    console.log("request:", JSON.stringify(event, undefined, 2));
-
+exports.handler = (event, context, callback) => {
     httprequest().then((data)=>{
-    
-        const response = {
-            statusCode: 200,
-            body: JSON.stringify(data),
-        };
-        var parsed = JSON.parse(response.body)
-    
+        var read = JSON.stringify(data);
+        console.log(read);
+
+        var parsed = JSON.parse(read)
+
+        // Build data object 
         const params = {
-            TableName: 'energyDataFO',
-            Item: {
+            'TableName': 'energyDataFO',
+            'Item': {
                 'Date': {S: parsed.tiden.split(" ")[0]},
                 'Time': {S: parsed.tiden.split(" ")[1]},
                 'Oil': {N: parsed.OlieSev_E.replace(/,/g, '.')},
@@ -29,16 +26,18 @@ exports.handler = async function(event) {
                 'Sun': {N: parsed.SolSev_E.replace(/,/g, '.')}
             }
         }
+        console.log('PARAMS: %j', params);
 
-        dynamodb.putItem(params, function(err, data) {
-        if (err) {
-            console.log("Error", err);
-        } else {
-            console.log("Success", data);
-        }
-        })
-    
+        // Insert dynamodb item
+        return dynamodb.putItem(params).promise()
+            .then(() => {
+                console.log('Item inserted');
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     })
+        .then(v => callback(null, v), callback);
 };
 
 // Function to call API and return data

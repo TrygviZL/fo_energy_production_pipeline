@@ -9,7 +9,7 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // DynamoDB for storing the SEV data
+    // DynamoDB for storing the SEV data. Note Removal policy
     const SevTable = new dynamodb.Table(this, 'Table', {
       partitionKey: {
         name: 'Date',
@@ -20,9 +20,11 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
         type: dynamodb.AttributeType.STRING
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: RemovalPolicy.DESTROY,
+      tableName: 'energyDataFO'
     });
 
+    // Lambda function recource
     const SevPullLambda = new lambda.Function(this, 'PullData', {
       runtime: lambda.Runtime.NODEJS_12_X,
       code: lambda.Code.fromAsset('lambda'),
@@ -31,9 +33,14 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
         TABLE_NAME: SevTable.tableName
       }
     });
+
+    // Event rule to trigger lambda on schedule 
     const eventRule = new events.Rule(this, 'scheduleRule', {
-      schedule: events.Schedule.cron({ minute: '/1'}),
+      schedule: events.Schedule.cron({ minute: '/3'}),
     });
     eventRule.addTarget(new targets.LambdaFunction(SevPullLambda))
+
+    // Grant write to lambda
+    SevTable.grantWriteData(SevPullLambda);
   }
 }
