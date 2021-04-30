@@ -40,7 +40,7 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
     });
     eventRule.addTarget(new targets.LambdaFunction(SevPullLambda))
 
-    // Grant write to lambda
+    // Grant write access for lambda function
     SevTable.grantWriteData(SevPullLambda);
   }
 }
