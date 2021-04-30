@@ -24,17 +24,45 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
       tableName: 'energyDataFO'
     });
 
-    // Lambda function recource
-    const SevPullLambda = new lambda.Function(this, 'PullData', {
+    // DynamoDB for storing the Vorn data. Note Removal policy
+    // TODO: Add partition and sort key names
+    const VornTable = new dynamodb.Table(this, 'Table', {
+      partitionKey: {
+        name: '<>',
+        type: dynamodb.AttributeType.STRING
+      },
+      sortKey:{
+        name: '<>',
+        type: dynamodb.AttributeType.STRING
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY,
+      tableName: 'weatherDataFO'
+    });
+
+    // Lambda function for pulling SEV data
+    const SevPullLambda = new lambda.Function(this, 'PullDataSEV', {
       runtime: lambda.Runtime.NODEJS_12_X,
       code: lambda.Code.fromAsset('lambda'),
-      handler: 'pull_data.handler',
+      handler: 'pull_data_SEV.handler',
       environment: {
         TABLE_NAME: SevTable.tableName
       }
     });
 
+    // Lambda resource for Vorn data
+    const VornPullLambda = new lambda.Function(this, 'PullDataVorn', {
+      runtime: lambda.Runtime.NODEJS_12_X,
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'pull_data_Vorn.handler',
+      environment: {
+        TABLE_NAME: VornTable.tableName
+      }
+    });
+
+
     // Event rule to trigger lambda on schedule 
+    // TODO: Add eventrule to Vorn data lambda
     const eventRule = new events.Rule(this, 'scheduleRule', {
       schedule: events.Schedule.cron({ minute: '/3'}),
     });
@@ -42,5 +70,6 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
 
     // Grant write access for lambda function
     SevTable.grantWriteData(SevPullLambda);
+    VornTable.grantWriteData(VornPullLambda);
   }
 }
