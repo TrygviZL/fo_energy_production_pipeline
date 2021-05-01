@@ -1,0 +1,16 @@
+#Vorn Data
+A .csv file of the current view can be downloaded from vedrid.fo/archive. We note 
+that weather station and time interval can be chosen. 
+Downloading the .csv file shows that the file is semicolon (;) delimited and has around
+65 columns including the 'DateTime' column which logs the values at a 1 minute interval.
+The naming of each column does not directly indicate which measure it represents. 
+By downloading the data for each graph individually, we found the following:
+________________________
+Column   |   Description
+WS       |   Wind Speed
+WD       |   Wind Direction
+TAAVG1M  |   Temperature avg 1m
+
+The sun data does not seem to exist in the overall data download. Thus we will
+create logic which uses the button next to the sun graph to extract only 
+that data. Othweise, all needed data is included in the large dataset.
