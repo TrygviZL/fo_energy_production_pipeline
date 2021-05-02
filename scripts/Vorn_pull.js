@@ -1,6 +1,9 @@
 const http = require('http');
 const fs = require('fs');
 const csv=require('csvtojson')
+var AWS = require('aws-sdk');
+var dynamodb = new AWS.DynamoDB();
+AWS.config.update({region: 'eu-west-1'});
 
 // Location codes used in the api call
 const Location = {
@@ -12,6 +15,9 @@ const Location = {
     suduroy: 'AWS311'
 }
 
+// Target DynamoDB table
+const table = 'weatherDataFO';
+
 // Default start end end times
 const Start = '2021-04-30';
 const End = '2021-05-01';
@@ -19,8 +25,8 @@ const End = '2021-05-01';
 // url for downloading the file
 const URL = `http://vedrid.fo/Archive/Download?locationId=${Location.torshavn}&from=${Start}&to=${End}`
 
-// TODO: teplace with "/tmp" when moving into lambda function
-const path = 'C:/Users/Trygvi/Downloads/test5.csv'
+// path for temporary file. Pats is ignored by Git
+const path = './tmp/vorn_data.csv'
 
 // Function to create write stream to file in path
 async function downloadVorn(url, dest) {
@@ -48,7 +54,7 @@ async function downloadVorn(url, dest) {
   });
 }
 
-
+// function to pull data, prepare into JSON object and put into DynamoDB
 async function parseVornData(){
   downloadVorn(URL,path)
   .then((filepath)=>{
@@ -58,17 +64,33 @@ async function parseVornData(){
     var Items = []
 
     weatherData.map(function(obs){
-      let Item = {
-        date: obs.DateTime.split(" ")[0],
-        time: obs.DateTime.split(" ")[1],
-        WindSpeed: obs.WS,
-        WindDirection: obs.WD,
-        Temperature: obs.TAAVG1M
-      }
-      Items.push(Item)
+
+      // Build data object and update column names
+      const params = {
+        'TableName': table,
+        'Item': {
+            'Date': {S: obs.DateTime.split(" ")[0]},
+            'Time': {S: obs.DateTime.split(" ")[1]},
+            'WindSpeed': {N: obs.WS},
+            'WindDirection': {N: obs.WD},
+            'Temperature': {N: obs.TAAVG1M}
+        }
+    }
+    console.log('PARAMS: %j', params);
+    addData(params)
     })
-    console.log(Items)
   })
+}
+
+function addData(params) {
+  // Insert dynamodb item
+  return dynamodb.putItem(params).promise()
+  .then(() => {
+      console.log('Item inserted');
+  })
+  .catch((err) => {
+      console.error(err);
+  });
 }
 
 parseVornData()
