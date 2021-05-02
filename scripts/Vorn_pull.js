@@ -1,7 +1,8 @@
 const http = require('http');
 const fs = require('fs');
-const csv = require('csv-parser');
+const csv=require('csvtojson')
 
+// Location codes used in the api call
 const Location = {
     torshavn: 'AWS310',
     bordan: 'AWS315',
@@ -11,37 +12,63 @@ const Location = {
     suduroy: 'AWS311'
 }
 
+// Default start end end times
 const Start = '2021-04-30';
 const End = '2021-05-01';
 
+// url for downloading the file
 const URL = `http://vedrid.fo/Archive/Download?locationId=${Location.torshavn}&from=${Start}&to=${End}`
 
 // TODO: teplace with "/tmp" when moving into lambda function
-const path = 'C:/Users/Trygvi/Downloads/test3.csv'
+const path = 'C:/Users/Trygvi/Downloads/test5.csv'
 
-function downloadVorn(url, dest, cb) {
-    var file = fs.createWriteStream(dest);
-    var request = http.get(url, function(response) {
-      response.pipe(file);
-      file.on('finish', function() {
-        file.close(cb);  // close() is async, call cb after close completes.
+// Function to create write stream to file in path
+async function downloadVorn(url, dest) {
+  return new Promise((resolve, reject) => {
+      const file = fs.createWriteStream(dest);
+
+      const request = http.get(url, response => {
+          if (response.statusCode === 200) {
+              response.pipe(file);
+          } else {
+              file.close();
+              fs.unlink(dest, () => {}); // Delete temp file
+              reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`);
+          }
       });
-    }).on('error', function(err) { // Handle errors
-      fs.unlink(dest); // Delete the file async. (But we don't check the result)
-      if (cb) cb(err.message);
-    });
-  };
+      request.on("error", err => {
+          file.close();
+          fs.unlink(dest, () => {}); // Delete temp file
+          reject(err.message);
+      });
 
-
-downloadVorn(URL, path, function(err, cb){
-    fs.createReadStream(path)
-    .pipe(csv({ separator: ';' }))
-    .on('data', (row) => {
-        console.log(row);
-    })
-    .on('end', () => {
-         console.log('CSV file successfully processed');
+      file.on("finish", () => {
+          resolve(path);
+      });
   });
-})
+}
 
 
+async function parseVornData(){
+  downloadVorn(URL,path)
+  .then((filepath)=>{
+    return csv({delimiter: ';'}).fromFile(filepath)
+  })
+  .then((weatherData)=>{
+    var Items = []
+
+    weatherData.map(function(obs){
+      let Item = {
+        date: obs.DateTime.split(" ")[0],
+        time: obs.DateTime.split(" ")[1],
+        WindSpeed: obs.WS,
+        WindDirection: obs.WD,
+        Temperature: obs.TAAVG1M
+      }
+      Items.push(Item)
+    })
+    console.log(Items)
+  })
+}
+
+parseVornData()
