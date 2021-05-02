@@ -7,6 +7,7 @@ The naming of each column does not directly indicate which measure it represents
 By downloading the data for each graph individually, we found the following:
 ________________________
 Column   |   Description
+
 WS       |   Wind Speed
 WD       |   Wind Direction
 TAAVG1M  |   Temperature avg 1m
