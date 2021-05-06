@@ -24,22 +24,6 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
       tableName: 'energyDataFO'
     });
 
-    // DynamoDB for storing the Vorn data. Note Removal policy
-    // TODO: Add partition and sort key names
-    const VornTable = new dynamodb.Table(this, 'Table', {
-      partitionKey: {
-        name: '<>',
-        type: dynamodb.AttributeType.STRING
-      },
-      sortKey:{
-        name: '<>',
-        type: dynamodb.AttributeType.STRING
-      },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: RemovalPolicy.DESTROY,
-      tableName: 'weatherDataFO'
-    });
-
     // Lambda function for pulling SEV data
     const SevPullLambda = new lambda.Function(this, 'PullDataSEV', {
       runtime: lambda.Runtime.NODEJS_12_X,
@@ -50,15 +34,35 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
       }
     });
 
-    // Lambda resource for Vorn data
-    const VornPullLambda = new lambda.Function(this, 'PullDataVorn', {
-      runtime: lambda.Runtime.NODEJS_12_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'pull_data_Vorn.handler',
-      environment: {
-        TABLE_NAME: VornTable.tableName
+    const Locations=[
+      'torshavn',
+      'bordan',
+      'eidi',
+      'fugloy',
+      'mykines',
+      'suduroy'
+    ]
+    
+    const VornTables = Locations.map((id: string)=>{
+      const name_palce = id
+      const table = new dynamodb.Table(this,`${name_palce}`+'Table',{
+        partitionKey: {
+          name: 'date',
+          type: dynamodb.AttributeType.STRING
+        },
+        sortKey:{
+          name:'time',
+          type: dynamodb.AttributeType.STRING
+        },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: RemovalPolicy.DESTROY,
+        tableName: 'weatherData' + '_' + `${name_palce}`
+      })
+      return {
+        table
       }
-    });
+    })
+
 
 
     // Event rule to trigger lambda on schedule 
@@ -70,6 +74,6 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
 
     // Grant write access for lambda function
     SevTable.grantWriteData(SevPullLambda);
-    VornTable.grantWriteData(VornPullLambda);
+    //VornTable.grantWriteData(VornPullLambda);
   }
 }

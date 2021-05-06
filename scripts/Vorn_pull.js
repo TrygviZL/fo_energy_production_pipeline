@@ -1,7 +1,13 @@
+// Script to call weather data from specific location and time interval
+// and push the data to DynamoDB. The current implementation will create
+// a new table for each location.
+
+
 const http = require('http');
 const fs = require('fs');
 const csv=require('csvtojson')
-var AWS = require('aws-sdk');
+const AWS = require('aws-sdk');
+
 var dynamodb = new AWS.DynamoDB();
 AWS.config.update({region: 'eu-west-1'});
 
@@ -25,7 +31,7 @@ const End = '2021-05-01';
 // url for downloading the file
 const URL = `http://vedrid.fo/Archive/Download?locationId=${Location.torshavn}&from=${Start}&to=${End}`
 
-// path for temporary file. Pats is ignored by Git
+// path for temporary file. Paths is ignored by Git
 const path = './tmp/vorn_data.csv'
 
 // Function to create write stream to file in path
@@ -54,6 +60,8 @@ async function downloadVorn(url, dest) {
   });
 }
 
+// Todo test function and expand for other locations
+
 // function to pull data, prepare into JSON object and put into DynamoDB
 async function parseVornData(){
   downloadVorn(URL,path)
@@ -61,13 +69,11 @@ async function parseVornData(){
     return csv({delimiter: ';'}).fromFile(filepath)
   })
   .then((weatherData)=>{
-    var Items = []
-
     weatherData.map(function(obs){
 
       // Build data object and update column names
       const params = {
-        'TableName': table,
+        'TableName': table+'_'+Location.torshavn,
         'Item': {
             'Date': {S: obs.DateTime.split(" ")[0]},
             'Time': {S: obs.DateTime.split(" ")[1]},
