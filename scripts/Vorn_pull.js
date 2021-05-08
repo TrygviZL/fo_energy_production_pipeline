@@ -83,7 +83,7 @@ async function parseVornData(){
         }
     }
     console.log('PARAMS: %j', params);
-    addData(params)
+    //addData(params)
     })
   })
 }

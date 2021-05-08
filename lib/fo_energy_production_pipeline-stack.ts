@@ -34,6 +34,7 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
       }
     });
 
+    // dynamo db table including lambda for each weather location
     const Locations=[
       'torshavn',
       'bordan',
@@ -42,7 +43,6 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
       'mykines',
       'suduroy'
     ]
-    
     const VornTables = Locations.map((id: string)=>{
       const name_palce = id
       const table = new dynamodb.Table(this,`${name_palce}`+'Table',{
@@ -58,12 +58,18 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
         removalPolicy: RemovalPolicy.DESTROY,
         tableName: 'weatherData' + '_' + `${name_palce}`
       })
-      return {
-        table
-      }
+
+      const Lambda = new lambda.Function(this, `${name_palce}`+'Lambda', {
+        runtime: lambda.Runtime.NODEJS_12_X,
+        code: lambda.Code.fromAsset('lambda'),
+        handler: 'pull_data_SEV.handler',
+        environment: {
+          TABLE_NAME: table.tableName
+        }
+      });
+
+      table.grantWriteData(Lambda);
     })
-
-
 
     // Event rule to trigger lambda on schedule 
     // TODO: Add eventrule to Vorn data lambda
