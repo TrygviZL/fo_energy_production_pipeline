@@ -25,7 +25,7 @@ export class FoEnergyProductionPipelineStack extends cdk.Stack {
     });
 
     // Lambda function for pulling SEV data
-    const SevPullLambda = new lambda.Function(this, 'PullDataSEV', {
+    const SevPullLambda = new lambda.Function(this, 'PullData', {
       runtime: lambda.Runtime.NODEJS_12_X,
       code: lambda.Code.fromAsset('lambda'),
       handler: 'pull_data_SEV.handler',

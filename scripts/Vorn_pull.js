@@ -7,9 +7,9 @@ const http = require('http');
 const fs = require('fs');
 const csv=require('csvtojson')
 const AWS = require('aws-sdk');
-
-var dynamodb = new AWS.DynamoDB();
 AWS.config.update({region: 'eu-west-1'});
+var dynamodb = new AWS.DynamoDB();
+
 
 // Location codes used in the api call
 const Location = {
@@ -75,28 +75,26 @@ async function parseVornData(){
       const params = {
         'TableName': table+'_'+Location.torshavn,
         'Item': {
-            'Date': {S: obs.DateTime.split(" ")[0]},
-            'Time': {S: obs.DateTime.split(" ")[1]},
-            'WindSpeed': {N: obs.WS},
-            'WindDirection': {N: obs.WD},
-            'Temperature': {N: obs.TAAVG1M}
+            'date': {S: obs.DateTime.split(" ")[0]},
+            'time': {S: obs.DateTime.split(" ")[1]},
+            'WindSpeed': {N: obs.WS.replace(/,/g, '.')},
+            'WindDirection': {N: obs.WD.replace(/,/g, '.')},
+            'Temperature': {N: obs.TAAVG1M.replace(/,/g, '.')}
         }
     }
     console.log('PARAMS: %j', params);
-    //addData(params)
+
+    // Push data to dynamo
+    return dynamodb.putItem(params).promise()
+            .then(() => {
+                console.log('Item inserted');
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     })
   })
 }
 
-function addData(params) {
-  // Insert dynamodb item
-  return dynamodb.putItem(params).promise()
-  .then(() => {
-      console.log('Item inserted');
-  })
-  .catch((err) => {
-      console.error(err);
-  });
-}
 
 parseVornData()
