@@ -18,6 +18,7 @@ The energy production on the Faroe Islands is handled by the public comany SEV. 
 
 ## AWS Architecture
 The project is built on AWS using CDK with TypeScript as the infrastructure code. Lambda functions are written using vanilla JavaScript. 
+![AWS architecture](https://github.com/TrygviZL/fo_energy_production_pipeline/blob/main/docs/fo_energy_AWS-Architecture.png?raw=true)
 
 
 ## Useful commands
