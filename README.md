@@ -13,7 +13,12 @@ http://vedrid.fo/Archive/WeatherStationMeasurements
 | from       | string | Start date of call in format 'YYYY-MM-DD'                                                                                                                     |
 | to         | string | End date of call in format 'YYYY-MM-DD'
 
-Small project to pull data from public api https://www.sev.fo/api/realtimemap/now/ which returns the energy pruduction data of SEV, the Faroese energy company. The project is written in aws CDK and fully hosted on aws. 
+## Energy production data
+The energy production on the Faroe Islands is handled by the public comany SEV. On their webpage https://www.sev.fo/framleidsla/el-orka-i-foroyum/ they show the current energy production across all types from biogas to oil. While there is to my knowledge no public API to call historic data for the energy production, the endpoint which genereates the data for this page is https://www.sev.fo/api/realtimemap/now/. This endpoint returns the current energy data including a timestamp. To make use of this data, I set up a small AWS stack which calls the data using a Lambda function and pushes it to a DynamoDB table.
+
+## AWS Architecture
+The project is built on AWS using CDK with TypeScript as the infrastructure code. Lambda functions are written using vanilla JavaScript. 
+
 
 ## Useful commands
  * `npm run build`   compile typescript to js
